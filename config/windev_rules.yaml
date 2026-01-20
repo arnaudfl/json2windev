@@ -1,0 +1,42 @@
+structure:
+  type_prefix: ST
+  keyword: "est une structure"
+  end: FIN
+  case: PascalCase
+
+result:
+  var_name: Resultat
+  type_name: STResult
+  assignment: "est un"
+
+types:
+  string: "une chaîne"
+  boolean: "un booléen"
+  int: "un entier"
+  real: "un réel"
+  variant: "un Variant"
+
+number:
+  detection: auto   # int vs real
+
+array:
+  string_plural: "un tableau de chaînes"
+  generic: "un tableau de {item}"
+  empty: "un tableau de Variant"
+  heterogeneous: variant
+
+null_handling:
+  mode: variant
+
+naming:
+  keep_json_keys: true
+  forbidden_chars: "[^A-Za-z0-9_]"
+  reserved_words: [SI, ALORS, SINON, FIN, SELON]
+  escape_reserved: "_{name}"
+
+generation:
+  order: children_first
+
+format:
+  indent: "    "
+  blank_line_after_structure: true
