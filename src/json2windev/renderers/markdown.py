@@ -31,6 +31,8 @@ class MarkdownRenderer(Renderer):
         structures = self._collect_structures(root)
         summary = self._compute_summary(structures)
 
+        stats = self._schema_stats(root)
+
         # 3) Markdown output
         lines: List[str] = []
         lines.append("# JSON → WinDev structures")
@@ -41,6 +43,14 @@ class MarkdownRenderer(Renderer):
         lines.append(f"- Fields: **{summary['fields']}**")
         lines.append(f"- Arrays: **{summary['arrays']}**")
         lines.append(f"- Variant fields: **{summary['variants']}**")
+        lines.append(f"- Max depth: **{stats['max_depth']}**")
+        lines.append("")
+        lines.extend(self._rules_snapshot_lines())
+        lines.append("## Notes")
+        lines.append("")
+        lines.append("- Fields are generated using WinDev prefixes (if enabled) but keep JSON compatibility via `<serialize=\"jsonKey\">`.")
+        lines.append("- `null` values and heterogeneous types are mapped to `Variant`.")
+        lines.append("- Empty arrays are mapped according to `array.empty` in the rules.")
         lines.append("")
         lines.append("## Table of contents")
         lines.append("")
@@ -187,3 +197,98 @@ class MarkdownRenderer(Renderer):
             "arrays": arrays,
             "variants": variants,
         }
+
+    def _rules_snapshot_lines(self) -> list[str]:
+        r = self.rules
+
+        naming = r.naming
+        prefixes = r.prefixes
+        types = r.types
+        array = r.array
+
+        lines: list[str] = []
+        lines.append("## Rules snapshot")
+        lines.append("")
+        lines.append(f"- Prefixes enabled: **{bool(naming.get('use_variable_prefixes'))}**")
+        lines.append(f"- Serialize enabled: **{bool(naming.get('serialize_attribute'))}**")
+        lines.append("")
+        lines.append("### Prefixes")
+        lines.append("")
+        lines.append("| Kind | Prefix |")
+        lines.append("|---|---|")
+        lines.append(f"| string | `{prefixes.get('string','')}` |")
+        lines.append(f"| int | `{prefixes.get('int','')}` |")
+        lines.append(f"| real | `{prefixes.get('real','')}` |")
+        lines.append(f"| boolean | `{prefixes.get('boolean','')}` |")
+        lines.append(f"| array | `{prefixes.get('array','')}` |")
+        lines.append(f"| structure | `{prefixes.get('structure','')}` |")
+        lines.append(f"| variant | `{prefixes.get('variant','')}` |")
+        lines.append("")
+        lines.append("### Type mapping")
+        lines.append("")
+        lines.append("| JSON kind | WinDev type |")
+        lines.append("|---|---|")
+        lines.append(f"| string | `{types.get('string','')}` |")
+        lines.append(f"| int | `{types.get('int','')}` |")
+        lines.append(f"| real | `{types.get('real','')}` |")
+        lines.append(f"| boolean | `{types.get('boolean','')}` |")
+        lines.append(f"| null / heterogeneous | `{types.get('variant','')}` |")
+        lines.append("")
+        lines.append("### Array rules")
+        lines.append("")
+        lines.append(f"- Empty array: `{array.get('empty','')}`")
+        lines.append(f"- Array of strings: `{array.get('string_plural','')}`")
+        lines.append(f"- Generic: `{array.get('generic','')}`")
+        lines.append("")
+        return lines
+
+    def _schema_stats(self, root: SchemaNode) -> dict[str, int]:
+        stats = {
+            "objects": 0,
+            "fields_total": 0,
+            "arrays_total": 0,
+            "arrays_of_objects": 0,
+            "arrays_of_scalars": 0,
+            "variants_total": 0,
+            "null_fields_detected": 0,
+            "max_depth": 0,
+        }
+
+        def walk(node: SchemaNode, depth: int) -> None:
+            stats["max_depth"] = max(stats["max_depth"], depth)
+
+            if node.kind == "object":
+                stats["objects"] += 1
+                stats["fields_total"] += len(node.fields)
+                for child in node.fields.values():
+                    walk(child, depth + 1)
+
+            elif node.kind == "array":
+                stats["arrays_total"] += 1
+                if node.item is None:
+                    stats["variants_total"] += 1
+                else:
+                    if node.item.kind == "object":
+                        stats["arrays_of_objects"] += 1
+                    elif node.item.kind in ("string", "number_int", "number_real", "boolean"):
+                        stats["arrays_of_scalars"] += 1
+                    elif node.item.kind == "null":
+                        stats["null_fields_detected"] += 1
+                        stats["variants_total"] += 1
+                    elif node.item.kind == "variant":
+                        stats["variants_total"] += 1
+                    walk(node.item, depth + 1)
+
+            elif node.kind == "null":
+                stats["null_fields_detected"] += 1
+                stats["variants_total"] += 1
+
+            elif node.kind == "variant":
+                stats["variants_total"] += 1
+
+            else:
+                # scalar
+                pass
+
+        walk(root, 0)
+        return stats
