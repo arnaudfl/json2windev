@@ -3,21 +3,19 @@ from typing import Dict, List, Set, Tuple
 from json2windev.core.schema import SchemaNode
 from json2windev.rules.loader import Rules
 from json2windev.utils.naming import pascal_case, sanitize_identifier, escape_reserved
+from json2windev.core.type_naming import assign_type_names
 from .base import Renderer
 
 class WinDevRenderer(Renderer):
     def __init__(self, rules: Rules):
         super().__init__(rules)
         self._declared: Set[str] = set()
-        self._used_type_names: Set[str] = set()
-        self._sig_to_name: Dict[str, str] = {}
 
     def render(self, root: SchemaNode) -> str:
         if root.kind != "object":
             raise ValueError("Root JSON must be an object to generate STResult.")
-        root.type_name = self.rules.result["type_name"]
 
-        self._assign_type_names(root, proposed=root.type_name)
+        assign_type_names(root, self.rules)
 
         ordered: List[SchemaNode] = []
         self._collect_children_first(root, ordered)
@@ -40,48 +38,6 @@ class WinDevRenderer(Renderer):
                 ordered.append(node)
         elif node.kind == "array" and node.item is not None:
             self._collect_children_first(node.item, ordered)
-
-    def _node_sig(self, node: SchemaNode) -> str:
-        if node.kind != "object":
-            return node.kind
-        parts = [f"{k}:{self._node_sig(node.fields[k])}" for k in sorted(node.fields.keys())]
-        return "object{" + ",".join(parts) + "}"
-
-    def _unique_type_name(self, proposed: str, node: SchemaNode) -> str:
-        sig = self._node_sig(node)
-        if sig in self._sig_to_name:
-            return self._sig_to_name[sig]
-        base = proposed
-        name = base
-        i = 1
-        while name in self._used_type_names:
-            i += 1
-            name = f"{base}{i}"
-        self._used_type_names.add(name)
-        self._sig_to_name[sig] = name
-        return name
-
-    def _assign_type_names(self, node: SchemaNode, proposed: str) -> None:
-        if node.kind == "object":
-            if node.type_name is None:
-                node.type_name = self._unique_type_name(proposed, node)
-            for key, child in node.fields.items():
-                if child.kind == "object":
-                    sugg = self.rules.structure["type_prefix"] + pascal_case(key)
-                    if sugg in self._used_type_names:
-                        parent = node.type_name.replace(self.rules.structure["type_prefix"], "")
-                        sugg = self.rules.structure["type_prefix"] + pascal_case(parent) + pascal_case(key)
-                    self._assign_type_names(child, sugg)
-                elif child.kind == "array" and child.item is not None and child.item.kind == "object":
-                    sugg = self.rules.structure["type_prefix"] + pascal_case(key) + "Item"
-                    if sugg in self._used_type_names:
-                        parent = node.type_name.replace(self.rules.structure["type_prefix"], "")
-                        sugg = self.rules.structure["type_prefix"] + pascal_case(parent) + pascal_case(key) + "Item"
-                    self._assign_type_names(child.item, sugg)
-                elif child.kind == "array" and child.item is not None:
-                    self._assign_type_names(child.item, proposed)
-        elif node.kind == "array" and node.item is not None:
-            self._assign_type_names(node.item, proposed)
 
     def _render_structure(self, node: SchemaNode) -> List[str]:
         indent = self.rules.fmt["indent"]

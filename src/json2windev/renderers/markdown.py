@@ -81,15 +81,6 @@ class MarkdownRenderer(Renderer):
         if root.kind != "object":
             raise ValueError("Root JSON must be an object to generate Markdown documentation.")
 
-        # Ensure type names exist by rendering once via WinDevRenderer? already done.
-        # But we still need them on the schema. WinDevRenderer assigns type_name internally.
-        # So we reproduce minimal type-name assignment here to be consistent.
-        # Easiest: instantiate WinDevRenderer and call its render already done above,
-        # but it doesn't expose the internal named nodes.
-        #
-        # Practical compromise: we infer type names deterministically here in the same way.
-        self._assign_type_names(root)
-
         ordered: List[SchemaNode] = []
         declared: Set[str] = set()
         self._collect_objects_children_first(root, ordered, declared)
@@ -108,47 +99,6 @@ class MarkdownRenderer(Renderer):
                 ordered.append(node)
         elif node.kind == "array" and node.item is not None:
             self._collect_objects_children_first(node.item, ordered, declared)
-
-    def _assign_type_names(self, root: SchemaNode) -> None:
-        # Minimal consistent naming with our WinDev rules:
-        # - root: STResult
-        # - child object: ST + PascalCase(json_key)
-        # - collisions: add numeric suffix
-        type_prefix = self.rules.structure["type_prefix"]
-        used: Set[str] = set()
-
-        def unique(name: str) -> str:
-            if name not in used:
-                used.add(name)
-                return name
-            i = 2
-            while f"{name}{i}" in used:
-                i += 1
-            out = f"{name}{i}"
-            used.add(out)
-            return out
-
-        root_name: str = self.rules.result["type_name"]
-        root.type_name = root_name
-        used.add(root_name)
-
-        def walk(node: SchemaNode) -> None:
-            if node.kind != "object":
-                if node.kind == "array" and node.item is not None:
-                    walk(node.item)
-                return
-
-            for key, child in node.fields.items():
-                if child.kind == "object":
-                    child.type_name = unique(type_prefix + pascal_case(key))
-                    walk(child)
-                elif child.kind == "array" and child.item is not None and child.item.kind == "object":
-                    child.item.type_name = unique(type_prefix + pascal_case(key) + "Item")
-                    walk(child.item)
-                elif child.kind == "array" and child.item is not None:
-                    walk(child.item)
-
-        walk(root)
 
     def _doc_rows(self, obj: SchemaNode) -> List[Tuple[str, str, str, str]]:
         rows: List[Tuple[str, str, str, str]] = []
