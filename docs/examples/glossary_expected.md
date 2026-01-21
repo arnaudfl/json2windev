@@ -47,6 +47,28 @@
 - `null` values and heterogeneous types are mapped to `Variant`.
 - Empty arrays are mapped according to `array.empty` in the rules.
 
+## Structure dependency table
+
+| Parent structure | Field | Child structure |
+|---|---|---|
+| `STGlossDiv` | `stGlossList` | `STGlossList` |
+| `STGlossEntry` | `stGlossDef` | `STGlossDef` |
+| `STGlossList` | `stGlossEntry` | `STGlossEntry` |
+| `STGlossary` | `stGlossDiv` | `STGlossDiv` |
+| `STResult` | `stGlossary` | `STGlossary` |
+
+## Structure dependencies
+
+This section shows which WinDev structures reference other structures.
+
+- `STResult`
+  - `STGlossary`
+    - `STGlossDiv`
+      - `STGlossList`
+        - `STGlossEntry`
+          - `STGlossDef`
+
+
 ## Table of contents
 
 - [STGlossDef](#stglossdef)

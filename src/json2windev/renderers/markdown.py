@@ -52,6 +52,9 @@ class MarkdownRenderer(Renderer):
         lines.append("- `null` values and heterogeneous types are mapped to `Variant`.")
         lines.append("- Empty arrays are mapped according to `array.empty` in the rules.")
         lines.append("")
+        lines.extend(self._dependency_table_lines(root))
+        lines.extend(self._dependency_tree_lines(root))
+        lines.append("")
         lines.append("## Table of contents")
         lines.append("")
         for s in structures:
@@ -292,3 +295,113 @@ class MarkdownRenderer(Renderer):
 
         walk(root, 0)
         return stats
+
+    def _dependency_tree_lines(self, root: SchemaNode) -> list[str]:
+        """
+        Build a deterministic dependency tree between structures.
+        Assumes type names are already assigned on object nodes.
+        """
+        if root.kind != "object":
+            return []
+
+        lines: list[str] = []
+        lines.append("## Structure dependencies")
+        lines.append("")
+        lines.append("This section shows which WinDev structures reference other structures.")
+        lines.append("")
+
+        # Build adjacency: parent_type -> set(child_type)
+        deps: dict[str, set[str]] = {}
+
+        def add_dep(parent: str, child: str) -> None:
+            if parent not in deps:
+                deps[parent] = set()
+            deps[parent].add(child)
+
+        def walk(node: SchemaNode) -> None:
+            if node.kind == "object":
+                parent = node.type_name or "STUnknown"
+                for child in node.fields.values():
+                    if child.kind == "object":
+                        add_dep(parent, child.type_name or "STUnknown")
+                        walk(child)
+                    elif child.kind == "array" and child.item is not None:
+                        if child.item.kind == "object":
+                            add_dep(parent, child.item.type_name or "STUnknown")
+                            walk(child.item)
+                        else:
+                            # scalar/variant arrays don't create structure deps
+                            walk(child.item)
+            elif node.kind == "array" and node.item is not None:
+                walk(node.item)
+
+        walk(root)
+
+        # Print a tree starting from root type_name
+        root_name = root.type_name or "STUnknown"
+
+        def emit(parent: str, indent: str = "") -> None:
+            children = sorted(deps.get(parent, set()))
+            for c in children:
+                lines.append(f"{indent}- `{c}`")
+                emit(c, indent + "  ")
+
+        lines.append(f"- `{root_name}`")
+        emit(root_name, indent="  ")
+        lines.append("")
+        return lines
+
+    def _dependency_table_lines(self, root: SchemaNode) -> list[str]:
+        """
+        Build a flat dependency table:
+        Parent structure -> field -> child structure
+        """
+        if root.kind != "object":
+            return []
+
+        rows: list[tuple[str, str, str]] = []
+
+        def walk(node: SchemaNode) -> None:
+            if node.kind == "object":
+                parent = node.type_name or "STUnknown"
+
+                for json_key, child in node.fields.items():
+                    if child.kind == "object":
+                        rows.append(
+                            (parent, self._field_name_and_serialize(json_key, child)[0],
+                            child.type_name or "STUnknown")
+                        )
+                        walk(child)
+
+                    elif child.kind == "array" and child.item is not None:
+                        if child.item.kind == "object":
+                            rows.append(
+                                (parent, self._field_name_and_serialize(json_key, child)[0],
+                                child.item.type_name or "STUnknown")
+                            )
+                            walk(child.item)
+                        else:
+                            walk(child.item)
+
+            elif node.kind == "array" and node.item is not None:
+                walk(node.item)
+
+        walk(root)
+
+        if not rows:
+            return []
+
+        # Deterministic ordering
+        rows = sorted(rows, key=lambda r: (r[0], r[1], r[2]))
+
+        lines: list[str] = []
+        lines.append("## Structure dependency table")
+        lines.append("")
+        lines.append("| Parent structure | Field | Child structure |")
+        lines.append("|---|---|---|")
+
+        for parent, field, child in rows:
+            lines.append(f"| `{parent}` | `{field}` | `{child}` |")
+
+        lines.append("")
+        return lines
