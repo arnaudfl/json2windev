@@ -1,0 +1,34 @@
+STGlossDef est une structure
+    sPara est une chaîne <serialize="para">
+    tabGlossSeeAlso est un tableau de chaînes <serialize="GlossSeeAlso">
+FIN
+
+STGlossEntry est une structure
+    sID est une chaîne <serialize="ID">
+    sSortAs est une chaîne <serialize="SortAs">
+    sGlossTerm est une chaîne <serialize="GlossTerm">
+    sAcronym est une chaîne <serialize="Acronym">
+    sAbbrev est une chaîne <serialize="Abbrev">
+    stGlossDef est un STGlossDef <serialize="GlossDef">
+    sGlossSee est une chaîne <serialize="GlossSee">
+FIN
+
+STGlossList est une structure
+    stGlossEntry est un STGlossEntry <serialize="GlossEntry">
+FIN
+
+STGlossDiv est une structure
+    sTitle est une chaîne <serialize="title">
+    stGlossList est un STGlossList <serialize="GlossList">
+FIN
+
+STGlossary est une structure
+    sTitle est une chaîne <serialize="title">
+    stGlossDiv est un STGlossDiv <serialize="GlossDiv">
+FIN
+
+STResult est une structure
+    stGlossary est un STGlossary <serialize="glossary">
+FIN
+
+Resultat est un STResult

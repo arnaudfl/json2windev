@@ -17,7 +17,7 @@ types:
   variant: "un Variant"
 
 number:
-  detection: auto   # int vs real
+  detection: auto
 
 array:
   string_plural: "un tableau de chaînes"
@@ -29,10 +29,20 @@ null_handling:
   mode: variant
 
 naming:
-  keep_json_keys: true
+  use_variable_prefixes: true
+  serialize_attribute: true
   forbidden_chars: "[^A-Za-z0-9_]"
   reserved_words: [SI, ALORS, SINON, FIN, SELON]
   escape_reserved: "_{name}"
+
+prefixes:
+  string: s
+  boolean: b
+  int: n
+  real: r
+  array: tab
+  structure: st
+  variant: v
 
 generation:
   order: children_first
