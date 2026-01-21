@@ -53,6 +53,7 @@ class MarkdownRenderer(Renderer):
         lines.append("- Empty arrays are mapped according to `array.empty` in the rules.")
         lines.append("")
         lines.extend(self._dependency_table_lines(root))
+        lines.extend(self._dependency_mermaid_lines(root))
         lines.extend(self._dependency_tree_lines(root))
         lines.append("")
         lines.append("## Table of contents")
@@ -62,7 +63,6 @@ class MarkdownRenderer(Renderer):
         lines.append("")
         lines.append("## Structures")
         lines.append("")
-
         for s in structures:
             lines.append(f"### {s.type_name}")
             lines.append("")
@@ -71,7 +71,6 @@ class MarkdownRenderer(Renderer):
             for json_key, wd_field, wd_type, serialize in s.rows:
                 lines.append(f"| `{json_key}` | `{wd_field}` | `{wd_type}` | `{serialize}` |")
             lines.append("")
-
         lines.append("## Generated WinDev code")
         lines.append("")
         lines.append("```wlanguage")
@@ -403,5 +402,59 @@ class MarkdownRenderer(Renderer):
         for parent, field, child in rows:
             lines.append(f"| `{parent}` | `{field}` | `{child}` |")
 
+        lines.append("")
+        return lines
+
+    def _dependency_mermaid_lines(self, root: SchemaNode) -> list[str]:
+        """
+        Mermaid dependency graph.
+        Uses WinDev field names as edge labels for readability.
+        """
+        if root.kind != "object":
+            return []
+
+        edges: set[tuple[str, str, str]] = set()  # (parent, field, child)
+
+        def walk(node: SchemaNode) -> None:
+            if node.kind == "object":
+                parent = node.type_name or "STUnknown"
+
+                for json_key, child in node.fields.items():
+                    if child.kind == "object":
+                        field = self._field_name_and_serialize(json_key, child)[0]
+                        child_name = child.type_name or "STUnknown"
+                        edges.add((parent, field, child_name))
+                        walk(child)
+
+                    elif child.kind == "array" and child.item is not None:
+                        if child.item.kind == "object":
+                            field = self._field_name_and_serialize(json_key, child)[0]
+                            child_name = child.item.type_name or "STUnknown"
+                            edges.add((parent, field, child_name))
+                            walk(child.item)
+                        else:
+                            walk(child.item)
+
+            elif node.kind == "array" and node.item is not None:
+                walk(node.item)
+
+        walk(root)
+
+        if not edges:
+            return []
+
+        # Deterministic ordering
+        ordered = sorted(edges, key=lambda e: (e[0], e[2], e[1]))
+
+        lines: list[str] = []
+        lines.append("## Mermaid dependency graph")
+        lines.append("")
+        lines.append("```mermaid")
+        lines.append("graph TD")
+        for parent, field, child in ordered:
+            # Mermaid label escaping: keep it simple, remove backticks and pipes
+            safe_field = field.replace("`", "").replace("|", "/")
+            lines.append(f"  {parent} -->|{safe_field}| {child}")
+        lines.append("```")
         lines.append("")
         return lines

@@ -57,6 +57,17 @@
 | `STGlossary` | `stGlossDiv` | `STGlossDiv` |
 | `STResult` | `stGlossary` | `STGlossary` |
 
+## Mermaid dependency graph
+
+```mermaid
+graph TD
+  STGlossDiv -->|stGlossList| STGlossList
+  STGlossEntry -->|stGlossDef| STGlossDef
+  STGlossList -->|stGlossEntry| STGlossEntry
+  STGlossary -->|stGlossDiv| STGlossDiv
+  STResult -->|stGlossary| STGlossary
+```
+
 ## Structure dependencies
 
 This section shows which WinDev structures reference other structures.
