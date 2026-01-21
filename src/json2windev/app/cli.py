@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--rules", default="config/windev_rules.yaml", help="Path to windev rules YAML")
     p.add_argument("-o", "--output", default="-", help="Output file path, or '-' for stdout")
 
-    p.add_argument("--format", default="windev", choices=["windev"], help="Output format (future-proof)")
+    p.add_argument("--format", default="windev", choices=["windev", "markdown"], help="Output format")
     p.add_argument("--no-prefixes", action="store_true", help="Disable WinDev variable prefixes (runtime override)")
     p.add_argument("--no-serialize", action="store_true", help="Disable <serialize=\"...\"> (runtime override)")
     p.add_argument("--print-rules", action="store_true", help="Print effective rules (after overrides) and exit")
@@ -69,6 +69,10 @@ def main(argv: list[str] | None = None) -> None:
 
         if args.format == "windev":
             renderer = WinDevRenderer(rules)
+            out = renderer.render(schema)
+        elif args.format == "markdown":
+            from json2windev.renderers.markdown import MarkdownRenderer
+            renderer = MarkdownRenderer(rules)
             out = renderer.render(schema)
         else:
             raise ValueError(f"Unsupported format: {args.format}")
