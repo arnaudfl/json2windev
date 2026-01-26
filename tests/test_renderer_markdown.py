@@ -1,6 +1,7 @@
 from pathlib import Path
 from json2windev.rules.loader import load_rules
-from json2windev.core.infer import parse_json, infer_schema
+from json2windev.core.input import parse_json
+from json2windev.core.infer import infer_schema
 from json2windev.renderers.markdown import MarkdownRenderer
 
 def test_glossary_markdown_matches_expected():

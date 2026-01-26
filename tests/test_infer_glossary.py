@@ -1,5 +1,7 @@
 from pathlib import Path
-from json2windev.core.infer import parse_json, infer_schema
+from json2windev.core.input import parse_json
+from json2windev.core.infer import infer_schema
+
 
 def test_infer_root_is_object():
     repo = Path(__file__).resolve().parents[1]

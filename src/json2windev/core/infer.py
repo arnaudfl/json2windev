@@ -4,9 +4,6 @@ from typing import Any
 from .schema import SchemaNode
 from .merge import merge
 
-def parse_json(text: str) -> Any:
-    return json.loads(text)
-
 def infer_schema(value: Any) -> SchemaNode:
     if value is None:
         return SchemaNode("null")

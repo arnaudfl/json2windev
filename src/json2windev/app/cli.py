@@ -7,7 +7,8 @@ from pathlib import Path
 from json2windev import generate_windev_from_json
 from json2windev.rules.loader import load_rules
 from json2windev.renderers.windev import WinDevRenderer
-from json2windev.core.infer import parse_json, infer_schema
+from json2windev.core.infer import infer_schema
+from json2windev.core.input import parse_json, pretty_json, JsonParseError
 
 
 def _read_input(path: str) -> str:
@@ -39,6 +40,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--print-rules", action="store_true", help="Print effective rules (after overrides) and exit")
     p.add_argument("--gui", action="store_true", help="Launch the GUI (Tkinter)")
 
+    p.add_argument("--validate-only", action="store_true", help="Validate JSON and infer schema, then exit")
+    p.add_argument("--pretty", action="store_true", help="Pretty-print the input JSON (after parsing) and exit")
+
     args = p.parse_args(argv)
 
     if args.gui:
@@ -65,7 +69,17 @@ def main(argv: list[str] | None = None) -> None:
 
         # Pipeline (explicit, format-ready)
         data = parse_json(json_text)
+
+        if args.pretty:
+            _write_output(args.output, pretty_json(data))
+            return
+
         schema = infer_schema(data)
+
+        if args.validate_only:
+            # If we reached here, JSON was valid and schema inference succeeded
+            _write_output(args.output, "OK\n")
+            return
 
         if args.format == "windev":
             renderer = WinDevRenderer(rules)
@@ -79,6 +93,9 @@ def main(argv: list[str] | None = None) -> None:
 
         _write_output(args.output, out)
 
+    except JsonParseError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        raise SystemExit(2)
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         raise SystemExit(2)
