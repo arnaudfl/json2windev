@@ -4,6 +4,7 @@ from json2windev.core.schema import SchemaNode
 from json2windev.rules.loader import Rules
 from json2windev.utils.naming import pascal_case, sanitize_identifier, escape_reserved
 from json2windev.core.type_naming import assign_type_names
+from json2windev.utils.dedupe import NameRegistry
 from .base import Renderer
 
 class WinDevRenderer(Renderer):
@@ -40,10 +41,12 @@ class WinDevRenderer(Renderer):
             self._collect_children_first(node.item, ordered)
 
     def _render_structure(self, node: SchemaNode) -> List[str]:
+        registry = NameRegistry()
         indent = self.rules.fmt["indent"]
         lines = [f"{node.type_name} {self.rules.structure['keyword']}"]
         for json_key, child in node.fields.items():
             field_name, ser = self._field_name_and_serialize(json_key, child)
+            field_name = registry.unique(field_name)
             wd_type = self._wd_type(child)
             suffix = f" {ser}" if ser else ""
             lines.append(f"{indent}{field_name} est {wd_type}{suffix}")

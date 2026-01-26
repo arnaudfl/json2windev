@@ -8,6 +8,7 @@ from json2windev.rules.loader import Rules
 from json2windev.renderers.base import Renderer
 from json2windev.renderers.windev import WinDevRenderer
 from json2windev.utils.naming import pascal_case, sanitize_identifier, escape_reserved
+from json2windev.utils.dedupe import NameRegistry
 
 
 @dataclass(frozen=True)
@@ -113,9 +114,11 @@ class MarkdownRenderer(Renderer):
             self._collect_objects_children_first(node.item, ordered, declared)
 
     def _doc_rows(self, obj: SchemaNode) -> List[Tuple[str, str, str, str]]:
+        registry = NameRegistry()
         rows: List[Tuple[str, str, str, str]] = []
         for json_key, child in obj.fields.items():
             wd_field, serialize = self._field_name_and_serialize(json_key, child)
+            wd_field = registry.unique(wd_field)
             wd_type = self._wd_type(child)
             rows.append((json_key, wd_field, wd_type, serialize))
         return rows
