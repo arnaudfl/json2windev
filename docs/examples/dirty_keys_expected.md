@@ -3,7 +3,7 @@
 ## Summary
 
 - Structures: **2**
-- Fields: **4**
+- Fields: **8**
 - Arrays: **0**
 - Variant fields: **0**
 - Max depth: **2**
@@ -79,9 +79,13 @@ This section shows which WinDev structures reference other structures.
 
 | JSON key | WinDev field | WinDev type | Serialize |
 |---|---|---|---|
-| `a-b` | `sAB` | `une chaîne` | `<serialize="a-b">` |
-| `a b` | `sAB2` | `une chaîne` | `<serialize="a b">` |
-| `a_b` | `sAB3` | `une chaîne` | `<serialize="a_b">` |
+| `123abc` | `s123abc` | `une chaîne` | `<serialize="123abc">` |
+| `@id` | `sId` | `une chaîne` | `<serialize="@id">` |
+| `vehicle-build.id` | `sVehicleBuildId` | `une chaîne` | `<serialize="vehicle-build.id">` |
+| `type-approval` | `sTypeApproval` | `une chaîne` | `<serialize="type-approval">` |
+| `` | `sX` | `une chaîne` | `<serialize="">` |
+| `SELON` | `sSELON` | `une chaîne` | `<serialize="SELON">` |
+| `FIN` | `sFIN` | `une chaîne` | `<serialize="FIN">` |
 
 ### STResult
 
@@ -93,9 +97,13 @@ This section shows which WinDev structures reference other structures.
 
 ```wlanguage
 STRoot est une structure
-    sAB est une chaîne <serialize="a-b">
-    sAB2 est une chaîne <serialize="a b">
-    sAB3 est une chaîne <serialize="a_b">
+    s123abc est une chaîne <serialize="123abc">
+    sId est une chaîne <serialize="@id">
+    sVehicleBuildId est une chaîne <serialize="vehicle-build.id">
+    sTypeApproval est une chaîne <serialize="type-approval">
+    sX est une chaîne <serialize="">
+    sSELON est une chaîne <serialize="SELON">
+    sFIN est une chaîne <serialize="FIN">
 FIN
 
 STResult est une structure

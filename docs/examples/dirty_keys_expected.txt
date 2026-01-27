@@ -1,0 +1,15 @@
+STRoot est une structure
+    s123abc est une chaîne <serialize="123abc">
+    sId est une chaîne <serialize="@id">
+    sVehicleBuildId est une chaîne <serialize="vehicle-build.id">
+    sTypeApproval est une chaîne <serialize="type-approval">
+    sX est une chaîne <serialize="">
+    sSELON est une chaîne <serialize="SELON">
+    sFIN est une chaîne <serialize="FIN">
+FIN
+
+STResult est une structure
+    stRoot est un STRoot <serialize="root">
+FIN
+
+Resultat est un STResult

@@ -1,0 +1,39 @@
+STArrayOfObjectsItem est une structure
+    nId est un entier <serialize="id">
+    sName est une chaîne <serialize="name">
+FIN
+
+STArrayOfObjectsDifferentShapesItem est une structure
+    nId est un entier <serialize="id">
+    sCode est une chaîne <serialize="code">
+FIN
+
+STObj est une structure
+    sK est une chaîne <serialize="k">
+FIN
+
+STNullableOrObject est une structure
+    vMaybe est un Variant <serialize="maybe">
+    stObj est un STObj <serialize="obj">
+FIN
+
+STRoot est une structure
+    tabInts est un tableau de entier <serialize="ints">
+    tabReals est un tableau de réel <serialize="reals">
+    tabIntAndReal est un tableau de réel <serialize="int_and_real">
+    tabStrings est un tableau de chaînes <serialize="strings">
+    tabMixedScalars est un tableau de Variant <serialize="mixed_scalars">
+    tabMixedWithNull est un tableau de chaînes <serialize="mixed_with_null">
+    tabEmptyArray est un tableau de Variant <serialize="empty_array">
+    tabArrayOfObjects est un tableau de STArrayOfObjectsItem <serialize="array_of_objects">
+    tabArrayOfObjectsMissingField est un tableau de STArrayOfObjectsItem <serialize="array_of_objects_missing_field">
+    tabArrayOfObjectsDifferentShapes est un tableau de STArrayOfObjectsDifferentShapesItem <serialize="array_of_objects_different_shapes">
+    vNullableField est un Variant <serialize="nullable_field">
+    stNullableOrObject est un STNullableOrObject <serialize="nullable_or_object">
+FIN
+
+STResult est une structure
+    stRoot est un STRoot <serialize="root">
+FIN
+
+Resultat est un STResult
