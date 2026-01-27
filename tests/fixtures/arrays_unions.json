@@ -1,0 +1,28 @@
+{
+  "root": {
+    "ints": [1, 2, 3],
+    "reals": [1.1, 2.2],
+    "int_and_real": [1, 2.5, 3],
+    "strings": ["a", "b"],
+    "mixed_scalars": [1, "x", true],
+    "mixed_with_null": [null, "x"],
+    "empty_array": [],
+    "array_of_objects": [
+      { "id": 1, "name": "a" },
+      { "id": 2, "name": "b" }
+    ],
+    "array_of_objects_missing_field": [
+      { "id": 1, "name": "a" },
+      { "id": 2 }
+    ],
+    "array_of_objects_different_shapes": [
+      { "id": 1 },
+      { "code": "X" }
+    ],
+    "nullable_field": null,
+    "nullable_or_object": {
+      "maybe": null,
+      "obj": { "k": "v" }
+    }
+  }
+}
