@@ -1,0 +1,11 @@
+{
+  "root": {
+    "123abc": "x",
+    "@id": "y",
+    "vehicle-build.id": "z",
+    "type-approval": "t",
+    "": "empty",
+    "SELON": "reserved1",
+    "FIN": "reserved2"
+  }
+}
