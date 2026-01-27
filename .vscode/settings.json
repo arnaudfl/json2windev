@@ -1,5 +1,25 @@
 {
   "files.associations": {
     "**/tests/fixtures/batch/broken.json": "plaintext"
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/*.pyo": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "**/.cache": true,
+    "**/venv": true,
+    "**/env": true,
+    "**/.coverage": true,
+    "**/json2windev.egg-info": true
+  },
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/.venv": true,
+    "**/json2windev.egg-info": true
   }
 }
