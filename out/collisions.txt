@@ -1,0 +1,11 @@
+STRoot est une structure
+    sAB est une chaîne <serialize="a-b">
+    sAB2 est une chaîne <serialize="a b">
+    sAB3 est une chaîne <serialize="a_b">
+FIN
+
+STResult est une structure
+    stRoot est un STRoot <serialize="root">
+FIN
+
+Resultat est un STResult

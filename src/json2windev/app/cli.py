@@ -4,7 +4,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from json2windev import generate_windev_from_json
 from json2windev.rules.loader import load_rules
 from json2windev.renderers.windev import WinDevRenderer
 from json2windev.core.infer import infer_schema
@@ -22,6 +21,26 @@ def _write_output(path: str, content: str) -> None:
         sys.stdout.write(content)
     else:
         Path(path).write_text(content, encoding="utf-8")
+
+
+def _default_ext(fmt: str) -> str:
+    return ".md" if fmt == "markdown" else ".txt"
+
+
+def _render_one(json_text: str, rules, fmt: str) -> str:
+    data = parse_json(json_text)
+    schema = infer_schema(data)
+
+    if fmt == "windev":
+        renderer = WinDevRenderer(rules)
+        return renderer.render(schema)
+
+    if fmt == "markdown":
+        from json2windev.renderers.markdown import MarkdownRenderer
+        renderer = MarkdownRenderer(rules)
+        return renderer.render(schema)
+
+    raise ValueError(f"Unsupported format: {fmt}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -43,6 +62,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--validate-only", action="store_true", help="Validate JSON and infer schema, then exit")
     p.add_argument("--pretty", action="store_true", help="Pretty-print the input JSON (after parsing) and exit")
 
+    p.add_argument("--output-dir", default=None, help="Output directory for batch mode (when input is a directory)")
+    p.add_argument("--continue-on-error", action="store_true", help="Continue processing other files on error (batch mode)")
+
     args = p.parse_args(argv)
 
     if args.gui:
@@ -51,8 +73,6 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     try:
-        json_text = _read_input(args.input)
-
         # Load rules + apply runtime overrides
         rules = load_rules(args.rules)
 
@@ -67,7 +87,49 @@ def main(argv: list[str] | None = None) -> None:
             _write_output(args.output, yaml.safe_dump(rules.raw, sort_keys=False, allow_unicode=True))
             return
 
+        input_path = Path(args.input)
+
+        # ===== BATCH MODE =====
+        if input_path.exists() and input_path.is_dir():
+            if not args.output_dir:
+                print("ERROR: --output-dir is required when input is a directory.", file=sys.stderr)
+                raise SystemExit(2)
+
+            out_dir = Path(args.output_dir)
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            json_files = sorted(input_path.rglob("*.json"))
+            if not json_files:
+                print(f"ERROR: No .json files found in directory: {input_path}", file=sys.stderr)
+                raise SystemExit(2)
+
+            ok = 0
+            failed = 0
+
+            for f in json_files:
+                try:
+                    json_text = f.read_text(encoding="utf-8")
+                    rendered = _render_one(json_text, rules, args.format)
+
+                    rel = f.relative_to(input_path)
+                    target = (out_dir / rel).with_suffix(_default_ext(args.format))
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text(rendered, encoding="utf-8")
+
+                    ok += 1
+                    print(f"[OK] {rel}")
+
+                except Exception as e:
+                    failed += 1
+                    print(f"[FAIL] {f}: {e}", file=sys.stderr)
+                    if not args.continue_on_error:
+                        raise SystemExit(2)
+
+            print(f"Done. OK={ok}, FAIL={failed}")
+            return
+
         # Pipeline (explicit, format-ready)
+        json_text = _read_input(args.input)
         data = parse_json(json_text)
 
         if args.pretty:

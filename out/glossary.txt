@@ -1,0 +1,4 @@
+STResult est une structure
+FIN
+
+Resultat est un STResult
