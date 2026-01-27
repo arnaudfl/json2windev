@@ -1,71 +1,25 @@
 # json2windev
 
-**json2windev** est un outil Python permettant de générer automatiquement des **structures WinDev**
-à partir d’un fichier **JSON**, en respectant strictement les conventions de nommage et de typage
-internes (préfixes, structures `ST*`, attributs `<serialize="">`, etc.).
+**json2windev** est un outil en ligne de commande écrit en Python qui permet de :
 
-Le projet est pensé pour les développeurs **WinDev / WebDev** travaillant avec des API,
-webservices ou flux JSON, et souhaitant éviter toute génération manuelle fastidieuse.
+- convertir un JSON en structures **WinDev**
+- générer une **documentation Markdown** riche (structures, dépendances, Mermaid, etc.)
+- gérer des JSON réels et "sales" (clés invalides, collisions, tableaux hétérogènes, null, etc.)
+- traiter **un fichier ou un dossier entier** (mode batch)
 
----
-
-## 🎯 Objectif
-
-- Convertir un JSON arbitraire en structures WinDev exploitables
-- Garantir une compatibilité parfaite avec le JSON d’origine
-- Respecter les normes WinDev (préfixes, typage, sérialisation)
-- Centraliser les règles de génération dans un fichier **YAML**
-- Fournir une utilisation **CLI** (et GUI à terme)
+Le projet est pensé pour un usage **professionnel**, prédictible et testable.
 
 ---
 
-## ✨ Fonctionnalités clés
+## Prérequis
 
-- Inférence automatique du schéma JSON
-- Génération de structures `ST*`
-- Préfixes WinDev automatiques (`s`, `n`, `b`, `tab`, `st`, …)
-- Génération des attributs `<serialize="cléJson">`
-- Gestion des :
-  - tableaux (`un tableau de …`)
-  - tableaux de chaînes
-  - tableaux hétérogènes → `Variant`
-  - valeurs `null` → `Variant`
-- Ordre de génération : **sous-structures → structures parentes**
-- Variable finale :
-
-  ```text
-  Resultat est un STResult
-  ```
-
----
-
-## 📁 Structure du projet
-
-```text
-json2windev/
-├─ config/
-│  └─ windev_rules.yaml
-├─ docs/
-│  └─ examples/
-├─ src/
-│  └─ json2windev/
-│     ├─ core/
-│     ├─ renderers/
-│     ├─ rules/
-│     ├─ utils/
-│     └─ app/
-├─ tests/
-└─ pyproject.toml
-```
-
----
-
-## ⚙️ Installation
-
-### Prérequis
-
-- Python **3.11+**
+- Python **3.10+** (recommandé : 3.11)
 - Git
+- Windows, Linux ou macOS
+
+---
+
+## Installation
 
 ### Cloner le dépôt
 
@@ -74,122 +28,180 @@ git clone https://github.com/arnaudfl/json2windev.git
 cd json2windev
 ```
 
-### (Option recommandé) Créer un environnement virtuel
+### Créer un environnement virtuel (recommandé)
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate   # Windows
-# source .venv/bin/activate  # Linux / macOS
 ```
 
-### Installer les dépendances
+### Activer l’environnement virtuel (⚠️ à faire à chaque nouvelle session)
+
+> ⚠️ **Important**  
+> L’environnement virtuel doit être activé **avant toute commande**
+> (`pytest`, `python -m json2windev`, etc.).
+
+#### Windows (CMD / PowerShell)
 
 ```bash
-pip install -e .
+.venv\Scripts\activate.bat
 ```
 
----
+#### Windows (PowerShell – si erreur de droits)
 
-## ▶️ Utilisation
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.venv\Scripts\Activate.ps1
+```
 
-### En ligne de commande (CLI)
-
-À partir d’un fichier JSON :
+#### Linux / macOS
 
 ```bash
-python -m json2windev docs/examples/glossary.json
+source .venv/bin/activate
 ```
 
-Depuis l’entrée standard :
-
-```bash
-cat docs/examples/glossary.json | python -m json2windev
-```
-
-Rediriger la sortie vers un fichier :
-
-```bash
-python -m json2windev input.json -o output.txt
-```
-
-Utiliser un fichier de règles personnalisé :
-
-```bash
-python -m json2windev input.json --rules config/windev_rules.yaml
-```
-
----
-
-## 🧪 Lancer les tests
-
-Les tests permettent de garantir que la génération reste **strictement identique**
-(aux exemples de référence) et d’éviter toute régression.
-
-### Installer pytest
-
-```bash
-pip install pytest
-```
-
-### Lancer tous les tests
-
-```bash
-pytest
-```
-
-### Lancer un test spécifique
-
-```bash
-pytest tests/test_renderer_windev.py
-```
-
-Les tests utilisent une approche **golden file** :
-
-- JSON d’entrée connu
-- sortie WinDev attendue
-- comparaison ligne à ligne
-
----
-
-## 🔧 Configuration (règles WinDev)
-
-Toutes les règles de génération sont centralisées dans :
+Une fois activé, l’invite doit afficher :
 
 ```text
+(.venv)
+```
+
+### Installer le projet en mode editable
+
+```bash
+python -m pip install -e .
+```
+
+---
+
+## Utilisation
+
+### Convertir un fichier JSON (WinDev)
+
+```bash
+python -m json2windev example.json
+```
+
+➡️ Sortie par défaut : **terminal** (format WinDev, `.txt`).
+
+### Générer la documentation Markdown
+
+```bash
+python -m json2windev example.json --format markdown
+```
+
+---
+
+## Mode batch (dossier)
+
+Traiter tous les fichiers `.json` d’un dossier.
+
+### WinDev (sortie `.txt`)
+
+```bash
+python -m json2windev input_dir --output-dir out --format windev --continue-on-error
+```
+
+### Markdown (sortie `.md`)
+
+```bash
+python -m json2windev input_dir --output-dir out --format markdown --continue-on-error
+```
+
+Structure générée :
+
+```txt
+out/
+├─ file1.txt
+├─ file2.txt
+└─ subdir/
+   └─ file3.txt
+```
+
+---
+
+## Options CLI
+
+| Option | Description |
+| ------ | ------------- |
+| `--format` | `windev` (défaut) ou `markdown` |
+| `--output` | Écrit la sortie dans un fichier |
+| `--output-dir` | Dossier de sortie (mode batch) |
+| `--continue-on-error` | Continue le batch même si un fichier échoue |
+| `--pretty` | Pretty-print du JSON et sortie |
+| `--validate-only` | Valide le JSON + schéma puis quitte |
+| `--rules` | Chemin vers le fichier `windev_rules.yaml` |
+
+---
+
+## Règles WinDev
+
+Les règles de génération sont définies dans :
+
+```txt
 config/windev_rules.yaml
 ```
 
-Ce fichier définit :
+Elles contrôlent :
 
-- les préfixes de variables (`s`, `n`, `b`, `tab`, `st`, …)
-- les types WinDev
-- la gestion des tableaux et du `null`
-- l’ajout automatique de `<serialize="">`
-- l’ordre de génération
-
-👉 **Le moteur n’implémente aucune règle WinDev en dur**.  
-Toute évolution passe par une modification du YAML.
+- préfixes (`s`, `n`, `tab`, `st`, etc.)
+- types WinDev
+- mots réservés
+- règles sur les tableaux
+- gestion de `<serialize="jsonKey">`
 
 ---
 
-## 🗺️ Roadmap
+## Robustesse / Hardening
 
-Le plan de développement détaillé est disponible dans :
+Le moteur gère :
 
-```text
-ROADMAP.md
+- clés invalides (`-`, `.`, `@`, chiffre en premier, clé vide)
+- collisions déterministes (`sField`, `sField2`, `sField3`)
+- tableaux hétérogènes
+- `null` et unions de types
+- tableaux vides
+
+➡️ **Le JSON d’entrée n’est jamais modifié**  
+La compatibilité est assurée via `<serialize="clé originale">`.
+
+---
+
+## Tests
+
+### Lancer tous les tests
+
+> ⚠️ Assurez-vous que l’environnement virtuel est bien activé (`(.venv)` visible)
+
+```bash
+pytest -q
+```
+
+Les tests couvrent :
+
+- inférence de schéma
+- génération WinDev
+- génération Markdown
+- hardening JSON réel
+- mode batch CLI
+
+---
+
+## Structure du projet
+
+```txt
+src/json2windev/
+├─ app/            # CLI
+├─ core/           # parsing, inférence
+├─ renderers/      # WinDev / Markdown
+├─ rules/          # chargement YAML
+├─ utils/          # helpers (naming, dedupe)
+tests/
+config/
+docs/
 ```
 
 ---
 
-## 📌 Philosophie du projet
+## Licence
 
-> Le moteur infère des faits.  
-> Le YAML décide du style.  
-> Le rendu est prévisible et conforme.
-
----
-
-## 📄 Licence
-
-MIT
+Projet personnel – usage libre.
